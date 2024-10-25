@@ -6,7 +6,8 @@ from dotenv import load_dotenv
 from telegram import Bot
 from telegram.ext import Updater, CommandHandler, CallbackContext
 from telegram import Update
-from spotdl import SpotDL  # Import spotdl
+from spotdl import SpotDL
+from spotdl import download
 
 # Load environment variables from .env file
 load_dotenv()
