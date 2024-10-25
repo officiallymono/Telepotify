@@ -4,7 +4,8 @@ import time
 import os
 from dotenv import load_dotenv
 from telegram import Bot
-from telegram.ext import Updater, CommandHandler
+from telegram.ext import Updater, CommandHandler, CallbackContext
+from telegram import Update
 
 # Load environment variables from .env file
 load_dotenv()
@@ -78,10 +79,29 @@ def track_current_song(bot: Bot):
                 last_track = current_track
         time.sleep(30)  # Check every 30 seconds
 
+# Function to download the currently playing track
+def download_track(update: Update, context: CallbackContext):
+    if len(context.args) < 2:
+        update.message.reply_text("لطفاً نام آهنگ و هنرمند را وارد کنید.")
+        return
+    
+    track_name = context.args[0]
+    artist = context.args[1]
+    
+    # فرض کنید لینک دانلود را دارید
+    download_link = f"https://example.com/download?track={track_name}&artist={artist}"
+    
+    # ارسال لینک دانلود به کاربر
+    update.message.reply_text(f"شما می‌توانید آهنگ {track_name} از {artist} را از این لینک دانلود کنید: {download_link}")
+
 # Setting up and running the bot
 def main():
     updater = Updater(TELEGRAM_BOT_TOKEN, use_context=True)
     bot = updater.bot
+    
+    # Command handler for downloading track
+    updater.dispatcher.add_handler(CommandHandler('download', download_track))
+    
     # Start tracking song changes
     updater.job_queue.run_once(lambda context: track_current_song(bot), 0)
 
