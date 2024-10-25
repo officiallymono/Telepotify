@@ -6,6 +6,7 @@ from dotenv import load_dotenv
 from telegram import Bot
 from telegram.ext import Updater, CommandHandler, CallbackContext
 from telegram import Update
+from spotdl import SpotDL  # Import spotdl
 
 # Load environment variables from .env file
 load_dotenv()
@@ -81,6 +82,17 @@ def track_current_song(bot: Bot):
         time.sleep(30)  # Check every 30 seconds
 
 # Function to download the currently playing track
+def download_song(track_name: str, artist: str):
+    spotdl = SpotDL()
+    search_query = f"{track_name} {artist}"
+    try:
+        # Download the track using spotdl
+        spotdl.download(search_query)
+        return f"{track_name} از {artist} با موفقیت دانلود شد."
+    except Exception as e:
+        return f"خطا در دانلود آهنگ: {str(e)}"
+
+# Function to handle the download command
 def download_track(update: Update, context: CallbackContext):
     if len(context.args) < 2:
         update.message.reply_text("لطفاً نام آهنگ و هنرمند را وارد کنید.")
@@ -89,11 +101,11 @@ def download_track(update: Update, context: CallbackContext):
     track_name = context.args[0]
     artist = context.args[1]
     
-    # فرض کنید لینک دانلود را دارید
-    download_link = f"https://example.com/download?track={track_name}&artist={artist}"
+    # Call the download function
+    result = download_song(track_name, artist)
     
-    # ارسال لینک دانلود به کاربر
-    update.message.reply_text(f"شما می‌توانید آهنگ {track_name} از {artist} را از این لینک دانلود کنید: {download_link}")
+    # Send the result to the user
+    update.message.reply_text(result)
 
 # Setting up and running the bot
 def main():
