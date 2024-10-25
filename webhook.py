@@ -12,6 +12,9 @@ TELEGRAM_BOT_TOKEN = os.getenv('TELEGRAM_BOT_TOKEN')
 CHANNEL_ID = os.getenv('CHANNEL_ID')
 TARGET_MESSAGE_ID = int(os.getenv('TARGET_MESSAGE_ID'))
 
+# Global variable to track whether to check the current song
+check_current_song = True
+
 # Function to get Spotify token
 def get_spotify_token():
     url = "https://accounts.spotify.com/api/token"
@@ -48,6 +51,7 @@ def get_current_playing_track(token):
 
 @app.route('/webhook', methods=['POST'])
 def webhook():
+    global check_current_song  # Use the global variable
     data = request.json
     if 'event' in data and data['event'] == 'track_changed':
         token = get_spotify_token()
@@ -56,6 +60,7 @@ def webhook():
             if current_track:
                 # Update the message in the channel
                 update_channel_message(current_track)
+                check_current_song = False  # Stop checking the current song
     return '', 200
 
 def update_channel_message(text):
