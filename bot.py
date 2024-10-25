@@ -4,7 +4,7 @@ import time
 import os
 from dotenv import load_dotenv
 from telegram import Bot
-from telegram.ext import Updater, CommandHandler, CallbackContext
+from telegram.ext import Updater, CommandHandler, CallbackContextو ApplicationBuilder
 from telegram import Update
 from spotdl import download
 
@@ -109,18 +109,16 @@ def download_track(update: Update, context: CallbackContext):
 
 # Setting up and running the bot
 def main():
-    updater = Updater(TELEGRAM_BOT_TOKEN, use_context=True)
-    bot = updater.bot
-    
+    application = ApplicationBuilder().token(TELEGRAM_BOT_TOKEN).build()  # استفاده از ApplicationBuilder
+
     # Command handler for downloading track
-    updater.dispatcher.add_handler(CommandHandler('download', download_track))
+    application.add_handler(CommandHandler('download', download_track))
     
     # Start tracking song changes
-    updater.job_queue.run_once(lambda context: track_current_song(bot), 0)
+    application.job_queue.run_once(lambda context: track_current_song(application.bot), 0)
 
     # Start the Telegram bot
-    updater.start_polling()
-    updater.idle()
+    application.run_polling()
 
 if __name__ == "__main__":
     main()
