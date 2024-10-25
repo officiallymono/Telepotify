@@ -16,6 +16,7 @@ SPOTIFY_CLIENT_SECRET = os.getenv('SPOTIFY_CLIENT_SECRET')
 TELEGRAM_BOT_TOKEN = os.getenv('TELEGRAM_BOT_TOKEN')
 CHANNEL_ID = os.getenv('CHANNEL_ID')
 TARGET_MESSAGE_ID = int(os.getenv('TARGET_MESSAGE_ID'))
+BOT_URL = os.getenv('BOT_URL')  # Load the new BOT_URL variable
 
 # Global variable to track whether to check the current song
 check_current_song = True
@@ -75,7 +76,7 @@ def track_current_song(bot: Bot):
         if token:
             current_track = get_current_playing_track(token)
             if current_track and current_track != last_track:
-                update_channel_message(bot, f"🎶 Currently playing: {current_track}")
+                update_channel_message(bot, f"🎶 Currently playing: {current_track}\nDownload here: {BOT_URL}/download?track={current_track}")
                 last_track = current_track
         time.sleep(30)  # Check every 30 seconds
 
