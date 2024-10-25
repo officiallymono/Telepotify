@@ -16,6 +16,9 @@ TELEGRAM_BOT_TOKEN = os.getenv('TELEGRAM_BOT_TOKEN')
 CHANNEL_ID = os.getenv('CHANNEL_ID')
 TARGET_MESSAGE_ID = int(os.getenv('TARGET_MESSAGE_ID'))
 
+# Global variable to track whether to check the current song
+check_current_song = True
+
 # Function to get Spotify token
 def get_spotify_token():
     url = "https://accounts.spotify.com/api/token"
@@ -60,8 +63,13 @@ def update_channel_message(bot: Bot, text: str):
 
 # Function to track song changes
 def track_current_song(bot: Bot):
+    global check_current_song  # Use the global variable
     last_track = None
     while True:
+        if not check_current_song:  # Check if we should continue
+            time.sleep(30)  # Wait before checking again
+            continue
+        
         token = get_spotify_token()
         if token:
             current_track = get_current_playing_track(token)
