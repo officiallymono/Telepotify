@@ -4,7 +4,7 @@ import time
 import os
 from dotenv import load_dotenv
 from telegram import Bot
-from telegram.ext import Updater, CommandHandler, CallbackContextو ApplicationBuilder
+from telegram.ext import CommandHandler, CallbackContext, ApplicationBuilder
 from telegram import Update
 from spotdl import download
 
@@ -17,7 +17,8 @@ SPOTIFY_CLIENT_SECRET = os.getenv('SPOTIFY_CLIENT_SECRET')
 TELEGRAM_BOT_TOKEN = os.getenv('TELEGRAM_BOT_TOKEN')
 CHANNEL_ID = os.getenv('CHANNEL_ID')
 TARGET_MESSAGE_ID = int(os.getenv('TARGET_MESSAGE_ID'))
-BOT_URL = os.getenv('BOT_URL')  # Load the new BOT_URL variable
+BOT_URL = os.getenv('BOT_URL')
+SPOTIFY_USERNAME = os.getenv('SPOTIFY_USERNAME')  # Load the Spotify username variable
 
 # Global variable to track whether to check the current song
 check_current_song = True
@@ -40,7 +41,7 @@ def get_spotify_token():
 
 # Function to get currently playing track from Spotify
 def get_current_playing_track(token):
-    url = "https://api.spotify.com/v1/me/player/currently-playing"
+    url = f"https://api.spotify.com/v1/users/{SPOTIFY_USERNAME}/player/currently-playing"  # Updated to include username
     headers = {
         "Authorization": f"Bearer {token}"
     }
@@ -90,7 +91,6 @@ def download_song(track_name: str, artist: str):
         return f"{track_name} از {artist} با موفقیت دانلود شد."
     except Exception as e:
         return f"خطا در دانلود آهنگ: {str(e)}"
-
 
 # Function to handle the download command
 def download_track(update: Update, context: CallbackContext):
