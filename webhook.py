@@ -1,7 +1,7 @@
 import requests
 import base64
 import os
-from flask import Flask, request
+from flask import Flask, request, jsonify
 
 app = Flask(__name__)
 
@@ -53,6 +53,8 @@ def get_current_playing_track(token):
 def webhook():
     global check_current_song  # Use the global variable
     data = request.json
+    
+    # Ensure the event exists and is related to track change
     if 'event' in data and data['event'] == 'track_changed':
         token = get_spotify_token()
         if token:
@@ -61,7 +63,8 @@ def webhook():
                 # Update the message in the channel
                 update_channel_message(current_track)
                 check_current_song = False  # Stop checking the current song
-    return '', 200
+
+    return jsonify({"status": "success"}), 200
 
 def update_channel_message(text):
     url = f"https://api.telegram.org/bot{TELEGRAM_BOT_TOKEN}/editMessageText"
@@ -70,7 +73,9 @@ def update_channel_message(text):
         "message_id": TARGET_MESSAGE_ID,
         "text": text
     }
-    requests.post(url, json=payload)
+    response = requests.post(url, json=payload)
+    if response.status_code != 200:
+        print("Error updating message in Telegram:", response.json())
 
 if __name__ == "__main__":
     app.run(port=5000)
