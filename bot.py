@@ -6,7 +6,6 @@ from dotenv import load_dotenv
 from telegram import Bot
 from telegram.ext import Updater, CommandHandler, CallbackContext
 from telegram import Update
-from spotdl import SpotDL
 from spotdl import download
 
 # Load environment variables from .env file
@@ -84,14 +83,14 @@ def track_current_song(bot: Bot):
 
 # Function to download the currently playing track
 def download_song(track_name: str, artist: str):
-    spotdl = SpotDL()
     search_query = f"{track_name} {artist}"
     try:
-        # Download the track using spotdl
-        spotdl.download(search_query)
+        # دانلود با استفاده از تابع download
+        download([search_query])
         return f"{track_name} از {artist} با موفقیت دانلود شد."
     except Exception as e:
         return f"خطا در دانلود آهنگ: {str(e)}"
+
 
 # Function to handle the download command
 def download_track(update: Update, context: CallbackContext):
