@@ -7,6 +7,8 @@ from telegram import Bot
 from telegram.ext import CommandHandler, CallbackContext, ApplicationBuilder
 from telegram import Update
 from spotdl import download
+from spotipy import Spotify
+from spotipy.oauth2 import SpotifyOAuth
 
 # Load environment variables from .env file
 load_dotenv()
@@ -18,43 +20,32 @@ TELEGRAM_BOT_TOKEN = os.getenv('TELEGRAM_BOT_TOKEN')
 CHANNEL_ID = os.getenv('CHANNEL_ID')
 TARGET_MESSAGE_ID = int(os.getenv('TARGET_MESSAGE_ID'))
 BOT_URL = os.getenv('BOT_URL')
-SPOTIFY_USERNAME = os.getenv('SPOTIFY_USERNAME')  # Load the Spotify username variable
+
+# Initialize Spotify client with OAuth
+sp_oauth = SpotifyOAuth(
+    client_id=SPOTIFY_CLIENT_ID,
+    client_secret=SPOTIFY_CLIENT_SECRET,
+    redirect_uri='http://localhost:8888/callback',
+    scope='user-read-currently-playing user-read-playback-state'
+)
+spotify = Spotify(auth_manager=sp_oauth)
 
 # Global variable to track whether to check the current song
 check_current_song = True
 
-# Function to get Spotify token
-def get_spotify_token():
-    url = "https://accounts.spotify.com/api/token"
-    headers = {
-        "Authorization": "Basic " + base64.b64encode((SPOTIFY_CLIENT_ID + ":" + SPOTIFY_CLIENT_SECRET).encode()).decode()
-    }
-    data = {
-        "grant_type": "client_credentials"
-    }
-    response = requests.post(url, headers=headers, data=data)
-    if response.status_code == 200:
-        return response.json().get("access_token")
-    else:
-        print("Error fetching Spotify token:", response.json())
-        return None
-
 # Function to get currently playing track from Spotify
-def get_current_playing_track(token):
-    url = f"https://api.spotify.com/v1/users/{SPOTIFY_USERNAME}/player/currently-playing"  # Updated to include username
-    headers = {
-        "Authorization": f"Bearer {token}"
-    }
-    response = requests.get(url, headers=headers)
-    if response.status_code == 200 and response.json():
-        item = response.json().get("item")
-        artist = item["artists"][0]["name"]
-        track_name = item["name"]
-        return f"{track_name} by {artist}"
-    elif response.status_code == 204:
-        return "No song currently playing"
-    else:
-        print("Error fetching current track:", response.json())
+def get_current_playing_track():
+    try:
+        current_song = spotify.current_user_playing_track()
+        if current_song and current_song["is_playing"]:
+            item = current_song["item"]
+            artist = item["artists"][0]["name"]
+            track_name = item["name"]
+            return f"{track_name} by {artist}"
+        else:
+            return "No song currently playing"
+    except Exception as e:
+        print("Error fetching current track:", e)
         return None
 
 # Function to update the target message in the channel
@@ -74,12 +65,10 @@ def track_current_song(bot: Bot):
             time.sleep(30)  # Wait before checking again
             continue
         
-        token = get_spotify_token()
-        if token:
-            current_track = get_current_playing_track(token)
-            if current_track and current_track != last_track:
-                update_channel_message(bot, f"🎶 Currently playing: {current_track}\nDownload here: {BOT_URL}/download?track={current_track}")
-                last_track = current_track
+        current_track = get_current_playing_track()
+        if current_track and current_track != last_track:
+            update_channel_message(bot, f"🎶 Currently playing: {current_track}\nDownload here: {BOT_URL}/download?track={current_track}")
+            last_track = current_track
         time.sleep(30)  # Check every 30 seconds
 
 # Function to download the currently playing track
