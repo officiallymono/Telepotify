@@ -75,7 +75,7 @@ def track_current_song(bot: Bot):
 def download_song(track_name: str, artist: str):
     search_query = f"{track_name} {artist}"
     try:
-        # دانلود با استفاده از تابع download
+        # Download using the download function
         download([search_query])
         return f"{track_name} از {artist} با موفقیت دانلود شد."
     except Exception as e:
@@ -96,8 +96,27 @@ def download_track(update: Update, context: CallbackContext):
     # Send the result to the user
     update.message.reply_text(result)
 
+# Function to start the OAuth process
+def start_auth():
+    auth_url = sp_oauth.get_authorize_url()
+    print("Visit this URL to authorize the application:", auth_url)
+
+    # After the user visits the URL, they will be redirected to the redirect_uri with the authorization code
+    response = input("Paste the full redirect URL here: ")
+    code = sp_oauth.parse_response_code(response)
+    token_info = sp_oauth.get_access_token(code)
+    return token_info
+
 # Setting up and running the bot
 def main():
+    # Get Spotify token at the start
+    token_info = start_auth()
+
+    # Check if we have a valid token
+    if token_info is None or 'access_token' not in token_info:
+        print("Failed to obtain access token.")
+        return
+    
     application = ApplicationBuilder().token(TELEGRAM_BOT_TOKEN).build()  # استفاده از ApplicationBuilder
 
     # Command handler for downloading track
