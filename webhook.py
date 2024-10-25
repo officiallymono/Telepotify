@@ -42,7 +42,8 @@ def get_current_playing_track(token):
         item = response.json().get("item")
         artist = item["artists"][0]["name"]
         track_name = item["name"]
-        return f"{track_name} by {artist}"
+        track_url = item["external_urls"]["spotify"]  # Get the Spotify URL for the track
+        return f"{track_name} by {artist}\nListen here: {track_url}"
     elif response.status_code == 204:
         return "No song currently playing"
     else:
