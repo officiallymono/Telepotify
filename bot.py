@@ -1,9 +1,20 @@
 import requests
 import base64
 import time
+import os
+from dotenv import load_dotenv
 from telegram import Bot
 from telegram.ext import Updater, CommandHandler
-from config import SPOTIFY_CLIENT_ID, SPOTIFY_CLIENT_SECRET, TELEGRAM_BOT_TOKEN, CHANNEL_ID, TARGET_MESSAGE_ID
+
+# Load environment variables from .env file
+load_dotenv()
+
+# Get variables
+SPOTIFY_CLIENT_ID = os.getenv('SPOTIFY_CLIENT_ID')
+SPOTIFY_CLIENT_SECRET = os.getenv('SPOTIFY_CLIENT_SECRET')
+TELEGRAM_BOT_TOKEN = os.getenv('TELEGRAM_BOT_TOKEN')
+CHANNEL_ID = os.getenv('CHANNEL_ID')
+TARGET_MESSAGE_ID = int(os.getenv('TARGET_MESSAGE_ID'))
 
 # Function to get Spotify token
 def get_spotify_token():
