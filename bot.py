@@ -37,8 +37,12 @@ sp_oauth = SpotifyOAuth(
     scope='user-read-currently-playing user-read-playback-state'
 )
 
+# Initialize Spotify variable
+spotify = None
+
 # Function to get the currently playing track
 def get_current_playing_track():
+    global spotify
     try:
         current_track = spotify.current_playback()
         if current_track and current_track.get('is_playing'):
@@ -114,23 +118,24 @@ async def start_auth():
     return token_info
 
 # Setting up and running the bot
-if __name__ == "__main__":
-    app = Client("my_bot", bot_token=TELEGRAM_BOT_TOKEN, api_id=API_ID, api_hash=API_HASH)
-    
 async def main():
+    logging.info("Starting the bot...")
     global spotify  # Declare that we're using the global variable
     token_info = await start_auth()
     
     if token_info is None or 'access_token' not in token_info:
-        print("Failed to obtain access token.")
+        logging.error("Failed to obtain access token.")
         return
 
     # Initialize Spotify client with the new access token
     spotify = Spotify(auth=token_info['access_token'])
 
+    app = Client("my_bot", bot_token=TELEGRAM_BOT_TOKEN, api_id=API_ID, api_hash=API_HASH)
     async with app:
         asyncio.create_task(track_current_song(app))
         await app.run()  # Remove asyncio.run() and just await app.run()
+    logging.info("Bot stopped.")
 
 
+if __name__ == "__main__":
     asyncio.run(main())
