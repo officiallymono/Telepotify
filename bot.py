@@ -37,6 +37,15 @@ sp_oauth = SpotifyOAuth(
 )
 spotify = Spotify(auth_manager=sp_oauth)
 
+# Function to get the currently playing track
+def get_current_playing_track():
+    current_track = spotify.current_playback()
+    if current_track is not None and current_track['is_playing']:
+        track_name = current_track['item']['name']
+        artist = current_track['item']['artists'][0]['name']
+        return track_name, artist
+    return None, None
+
 # Async function to update the target message in the channel
 async def update_channel_message(app: Client, text: str):
     try:
@@ -78,7 +87,9 @@ async def download_track(client: Client, message):
     track_name = args[0]
     artist = args[1]
     
-    await send_downloaded_file(client, message.chat.id, track_name, artist)
+    # Call the download function and send the response
+    response_message = download_song(track_name, artist)
+    await message.reply_text(response_message)
 
 # Function to start the OAuth process
 async def start_auth():
