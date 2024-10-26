@@ -1,6 +1,4 @@
 import requests
-import base64
-import time
 import os
 from dotenv import load_dotenv
 from telegram import Bot
@@ -42,12 +40,12 @@ def get_current_playing_track():
             item = current_song["item"]
             artist = item["artists"][0]["name"]
             track_name = item["name"]
-            return f"{track_name} by {artist}"
+            return track_name, artist  # Returning both track name and artist
         else:
-            return "No song currently playing"
+            return None, None
     except Exception as e:
         print("Error fetching current track:", e)
-        return None
+        return None, None
 
 # Async function to update the target message in the channel
 async def update_channel_message(bot: Bot, text: str):
@@ -62,11 +60,13 @@ async def track_current_song(bot: Bot):
     global check_current_song
     last_track = None
     while check_current_song:
-        current_track = get_current_playing_track()
-        if current_track and current_track != last_track:
-            await update_channel_message(bot, f"🎶 Currently playing: {current_track}\nDownload here: {BOT_URL}/download?track={current_track}")
-            last_track = current_track
-        await asyncio.sleep(30)
+        track_name, artist = get_current_playing_track()
+        if track_name and artist:
+            current_track = f"{track_name} by {artist}"
+            if current_track != last_track:
+                await update_channel_message(bot, f"🎶 Currently playing: {current_track}\nDownload here: {BOT_URL}/download?track={track_name}&artist={artist}")
+                last_track = current_track
+        await asyncio.sleep(10)
 
 # Function to download the currently playing track
 def download_song(track_name: str, artist: str):
@@ -78,6 +78,16 @@ def download_song(track_name: str, artist: str):
         return f"خطا در دانلود آهنگ: {str(e)}"
 
 # Function to handle the download command
+async def send_downloaded_file(update: Update, context: CallbackContext, track_name: str, artist: str):
+    result = download_song(track_name, artist)
+    if "با موفقیت دانلود شد." in result:
+        # فرض کنید نام فایل دانلود شده با فرمت مشخصی ذخیره می‌شود
+        file_path = f"{track_name} - {artist}.mp3"  # نام فایل دانلود شده
+        await context.bot.send_audio(chat_id=update.effective_chat.id, audio=open(file_path, 'rb'))
+    else:
+        await update.message.reply_text(result)
+
+# Function to handle the /download command
 def download_track(update: Update, context: CallbackContext):
     if len(context.args) < 2:
         update.message.reply_text("لطفاً نام آهنگ و هنرمند را وارد کنید.")
@@ -86,17 +96,20 @@ def download_track(update: Update, context: CallbackContext):
     track_name = context.args[0]
     artist = context.args[1]
     
-    result = download_song(track_name, artist)
-    update.message.reply_text(result)
+    # فراخوانی تابع ارسال فایل
+    asyncio.create_task(send_downloaded_file(update, context, track_name, artist))
 
 # Function to start the OAuth process
 def start_auth():
     auth_url = sp_oauth.get_authorize_url()
     print("Visit this URL to authorize the application:", auth_url)
 
-    response = input("Paste the full redirect URL here: ")
-    code = sp_oauth.parse_response_code(response)
-    token_info = sp_oauth.get_cached_token()
+    # Automatically get token
+    token_info = sp_oauth.get_access_token(as_dict=False)
+    if not token_info:
+        print("Failed to obtain access token.")
+        return None
+
     return token_info
 
 # Setting up and running the bot
@@ -114,7 +127,7 @@ async def main():
     # Start tracking song changes in the background
     asyncio.create_task(track_current_song(application.bot))
 
-    await application.run_polling()  # `await` اضافه شود
+    await application.run_polling()
 
 if __name__ == "__main__":
     asyncio.run(main())
