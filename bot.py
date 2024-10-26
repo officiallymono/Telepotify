@@ -9,6 +9,7 @@ from telegram import Update
 from spotdl import download
 from spotipy import Spotify
 from spotipy.oauth2 import SpotifyOAuth
+import asyncio
 
 # Load environment variables from .env file
 load_dotenv()
@@ -48,34 +49,29 @@ def get_current_playing_track():
         print("Error fetching current track:", e)
         return None
 
-# Function to update the target message in the channel
-def update_channel_message(bot: Bot, text: str):
+# Async function to update the target message in the channel
+async def update_channel_message(bot: Bot, text: str):
     try:
-        bot.edit_message_text(chat_id=CHANNEL_ID, message_id=TARGET_MESSAGE_ID, text=text)
+        await bot.edit_message_text(chat_id=CHANNEL_ID, message_id=TARGET_MESSAGE_ID, text=text)
         print("Channel message updated.")
     except Exception as e:
         print("Error updating message:", e)
 
-# Function to track song changes
-def track_current_song(bot: Bot):
-    global check_current_song  # Use the global variable
+# Async function to track song changes
+async def track_current_song(bot: Bot):
+    global check_current_song
     last_track = None
-    while True:
-        if not check_current_song:  # Check if we should continue
-            time.sleep(30)  # Wait before checking again
-            continue
-        
+    while check_current_song:
         current_track = get_current_playing_track()
         if current_track and current_track != last_track:
-            update_channel_message(bot, f"🎶 Currently playing: {current_track}\nDownload here: {BOT_URL}/download?track={current_track}")
+            await update_channel_message(bot, f"🎶 Currently playing: {current_track}\nDownload here: {BOT_URL}/download?track={current_track}")
             last_track = current_track
-        time.sleep(30)  # Check every 30 seconds
+        await asyncio.sleep(30)
 
 # Function to download the currently playing track
 def download_song(track_name: str, artist: str):
     search_query = f"{track_name} {artist}"
     try:
-        # Download using the download function
         download([search_query])
         return f"{track_name} از {artist} با موفقیت دانلود شد."
     except Exception as e:
@@ -90,10 +86,7 @@ def download_track(update: Update, context: CallbackContext):
     track_name = context.args[0]
     artist = context.args[1]
     
-    # Call the download function
     result = download_song(track_name, artist)
-    
-    # Send the result to the user
     update.message.reply_text(result)
 
 # Function to start the OAuth process
@@ -101,32 +94,27 @@ def start_auth():
     auth_url = sp_oauth.get_authorize_url()
     print("Visit this URL to authorize the application:", auth_url)
 
-    # After the user visits the URL, they will be redirected to the redirect_uri with the authorization code
     response = input("Paste the full redirect URL here: ")
     code = sp_oauth.parse_response_code(response)
-    token_info = sp_oauth.get_access_token(code)
+    token_info = sp_oauth.get_cached_token()
     return token_info
 
 # Setting up and running the bot
-def main():
+async def main():
     # Get Spotify token at the start
     token_info = start_auth()
 
-    # Check if we have a valid token
     if token_info is None or 'access_token' not in token_info:
         print("Failed to obtain access token.")
         return
-    
-    application = ApplicationBuilder().token(TELEGRAM_BOT_TOKEN).build()  # استفاده از ApplicationBuilder
 
-    # Command handler for downloading track
+    application = ApplicationBuilder().token(TELEGRAM_BOT_TOKEN).build()
     application.add_handler(CommandHandler('download', download_track))
-    
-    # Start tracking song changes
-    application.job_queue.run_once(lambda context: track_current_song(application.bot), 0)
 
-    # Start the Telegram bot
+    # Start tracking song changes in the background
+    asyncio.create_task(track_current_song(application.bot))
+
     application.run_polling()
 
 if __name__ == "__main__":
-    main()
+    asyncio.run(main())
