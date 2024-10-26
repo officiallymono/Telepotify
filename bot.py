@@ -29,9 +29,6 @@ sp_oauth = SpotifyOAuth(
 )
 spotify = Spotify(auth_manager=sp_oauth)
 
-# Global variable to track whether to check the current song
-check_current_song = True
-
 # Function to get currently playing track from Spotify
 def get_current_playing_track():
     try:
@@ -57,9 +54,8 @@ async def update_channel_message(bot: Bot, text: str):
 
 # Async function to track song changes
 async def track_current_song(bot: Bot):
-    global check_current_song
     last_track = None
-    while check_current_song:
+    while True:
         track_name, artist = get_current_playing_track()
         if track_name and artist:
             current_track = f"{track_name} by {artist}"
@@ -87,37 +83,19 @@ async def send_downloaded_file(update: Update, context: CallbackContext, track_n
         await update.message.reply_text(result)
 
 # Function to handle the /download command
-def download_track(update: Update, context: CallbackContext):
+async def download_track(update: Update, context: CallbackContext):
     if len(context.args) < 2:
-        update.message.reply_text("لطفاً نام آهنگ و هنرمند را وارد کنید.")
+        await update.message.reply_text("لطفاً نام آهنگ و هنرمند را وارد کنید.")
         return
     
     track_name = context.args[0]
     artist = context.args[1]
     
     # فراخوانی تابع ارسال فایل
-    asyncio.create_task(send_downloaded_file(update, context, track_name, artist))
+    await send_downloaded_file(update, context, track_name, artist)
 
-# Function to start the OAuth process
-def start_auth():
-    auth_url = sp_oauth.get_authorize_url()
-    print("Visit this URL to authorize the application:", auth_url)
-    
-    #  گرفتن کد دستی
-    code = input("Enter the code from the URL: ")
-    token_info = sp_oauth.get_access_token(code)
-
-    return token_info
-
-# Setting up and running the bot
+# Start the bot
 async def main():
-    # Get Spotify token at the start
-    token_info = start_auth()
-
-    if token_info is None or 'access_token' not in token_info:
-        print("Failed to obtain access token.")
-        return
-
     application = ApplicationBuilder().token(TELEGRAM_BOT_TOKEN).build()
     application.add_handler(CommandHandler('download', download_track))
 
@@ -127,5 +105,4 @@ async def main():
     await application.run_polling()
 
 if __name__ == "__main__":
-    # Use asyncio.run to run the main function
     asyncio.run(main())
