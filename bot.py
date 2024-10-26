@@ -102,7 +102,7 @@ async def start_auth():
     print("Visit this URL to authorize the application:", auth_url)
     
     code = input("Enter the code from the URL: ")
-    token_info = sp_oauth.get_access_token(code)
+    token_info = sp_oauth.get_cached_token()
 
     return token_info
 
@@ -119,6 +119,6 @@ if __name__ == "__main__":
 
         async with app:
             asyncio.create_task(track_current_song(app))
-            await app.idle()
+            await app.run()
 
     asyncio.run(main())
