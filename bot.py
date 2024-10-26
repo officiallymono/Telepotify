@@ -20,6 +20,8 @@ TELEGRAM_BOT_TOKEN = os.getenv('TELEGRAM_BOT_TOKEN')
 CHANNEL_ID = os.getenv('CHANNEL_ID')
 TARGET_MESSAGE_ID = int(os.getenv('TARGET_MESSAGE_ID'))
 BOT_URL = os.getenv('BOT_URL')
+API_ID = os.getenv('API_ID')  # API ID for Pyrogram
+API_HASH = os.getenv('API_HASH')  # API Hash for Pyrogram
 
 # Initialize Spotify client with OAuth
 sp_oauth = SpotifyOAuth(
@@ -116,7 +118,7 @@ def start_auth():
 
 # Setting up and running the bot
 if __name__ == "__main__":
-    app = Client("my_bot", bot_token=TELEGRAM_BOT_TOKEN)
+    app = Client("my_bot", bot_token=TELEGRAM_BOT_TOKEN, api_id=API_ID, api_hash=API_HASH)  # Add API ID and API Hash here
     
     async def main():
         token_info = start_auth()
