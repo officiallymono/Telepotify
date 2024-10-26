@@ -134,7 +134,8 @@ async def main():
     
     async with app:
         asyncio.create_task(track_current_song(app))
-        await app.run()  # Remove asyncio.run() and just await app.run()
+        await app.start()  # Start the app
+        await app.idle()   # Keep the bot running
 
 if __name__ == "__main__":
     asyncio.run(main())
