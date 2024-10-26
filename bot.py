@@ -5,9 +5,13 @@ from spotdl import download
 from spotipy import Spotify
 from spotipy.oauth2 import SpotifyOAuth
 import asyncio
+import logging
 
 # Load environment variables from .env file
 load_dotenv()
+
+# Set up logging
+logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
 
 # Get variables
 SPOTIFY_CLIENT_ID = os.getenv('SPOTIFY_CLIENT_ID')
@@ -41,16 +45,17 @@ def get_current_playing_track():
         else:
             return None, None
     except Exception as e:
-        print("Error fetching current track:", e)
+        logging.error("Error fetching current track: %s", e)
         return None, None
 
 # Async function to update the target message in the channel
 async def update_channel_message(app: Client, text: str):
     try:
         await app.edit_message_text(chat_id=CHANNEL_ID, message_id=TARGET_MESSAGE_ID, text=text)
-        print("Channel message updated.")
+        logging.info("Channel message updated.")
     except Exception as e:
-        print("Error updating message:", e)
+        logging.error("Error updating message: %s", e)
+        await app.send_message(chat_id=CHANNEL_ID, text=f"خطا در به‌روزرسانی پیام: {str(e)}")
 
 # Async function to track song changes
 async def track_current_song(app: Client):
@@ -79,7 +84,11 @@ async def send_downloaded_file(client: Client, chat_id: int, track_name: str, ar
     result = download_song(track_name, artist)
     if "با موفقیت دانلود شد." in result:
         file_path = f"{track_name} - {artist}.mp3"
-        await client.send_audio(chat_id=chat_id, audio=open(file_path, 'rb'))
+        if os.path.exists(file_path):
+            async with open(file_path, 'rb') as audio_file:
+                await client.send_audio(chat_id=chat_id, audio=audio_file)
+        else:
+            await client.send_message(chat_id=chat_id, text="فایل دانلود شده پیدا نشد.")
     else:
         await client.send_message(chat_id=chat_id, text=result)
 
@@ -109,18 +118,14 @@ def start_auth():
 # Setting up and running the bot
 async def main():
     token_info = start_auth()
-
     if token_info is None or 'access_token' not in token_info:
         print("Failed to obtain access token.")
         return
 
-    app = Client("my_bot", bot_token=TELEGRAM_BOT_TOKEN)
+    async with app:
+        await track_current_song(app)
 
-    # Start tracking song changes in the background
-    asyncio.create_task(track_current_song(app))
-
-    await app.start()
-    await app.idle()
+app = Client("my_bot", bot_token=TELEGRAM_BOT_TOKEN)
 
 if __name__ == "__main__":
     asyncio.run(main())
