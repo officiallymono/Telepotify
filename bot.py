@@ -117,18 +117,20 @@ async def start_auth():
 if __name__ == "__main__":
     app = Client("my_bot", bot_token=TELEGRAM_BOT_TOKEN, api_id=API_ID, api_hash=API_HASH)
     
-    async def main():
-        token_info = await start_auth()
-        
-        if token_info is None or 'access_token' not in token_info:
-            print("Failed to obtain access token.")
-            return
+async def main():
+    global spotify  # Declare that we're using the global variable
+    token_info = await start_auth()
+    
+    if token_info is None or 'access_token' not in token_info:
+        print("Failed to obtain access token.")
+        return
 
-        # Initialize Spotify client with the new access token
-        spotify = Spotify(auth=token_info['access_token'])
+    # Initialize Spotify client with the new access token
+    spotify = Spotify(auth=token_info['access_token'])
 
-        async with app:
-            asyncio.create_task(track_current_song(app))
-            await app.run()
+    async with app:
+        asyncio.create_task(track_current_song(app))
+        await app.run()  # Remove asyncio.run() and just await app.run()
+
 
     asyncio.run(main())
