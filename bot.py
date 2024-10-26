@@ -104,8 +104,8 @@ def start_auth():
     auth_url = sp_oauth.get_authorize_url()
     print("Visit this URL to authorize the application:", auth_url)
 
-    # Automatically get token
-    token_info = sp_oauth.get_access_token(as_dict=False, redirect_port=8889)  # تغییر پورت به 8889
+    # Automatically get token without redirect_port
+    token_info = sp_oauth.get_access_token(as_dict=False)  # حذف redirect_port
     if not token_info:
         print("Failed to obtain access token.")
         return None
