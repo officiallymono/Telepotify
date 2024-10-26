@@ -132,10 +132,12 @@ async def main():
 
     app = Client("my_bot", bot_token=TELEGRAM_BOT_TOKEN, api_id=API_ID, api_hash=API_HASH)
     
-    async with app:
-        asyncio.create_task(track_current_song(app))
-        await app.start()  # Start the app
-        await app.idle()   # Keep the bot running
+    # Start the app only if not already connected
+    if not app.is_connected:
+        async with app:
+            asyncio.create_task(track_current_song(app))
+            await app.start()  # Start the app
+            await app.idle()   # Keep the bot running
 
 if __name__ == "__main__":
     asyncio.run(main())
