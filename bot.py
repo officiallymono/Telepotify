@@ -117,6 +117,17 @@ async def start_auth():
     
     return token_info
 
+# Async function to connect with retry logic
+async def connect_with_retry(app: Client):
+    while True:
+        try:
+            await app.start()
+            logging.info("Connected successfully.")
+            break  # Exit the loop on successful connection
+        except ConnectionResetError:
+            logging.error("Connection was reset. Retrying in 5 seconds...")
+            await asyncio.sleep(5)  # Wait before retrying
+
 # Setting up and running the bot
 async def main():
     logging.info("Starting the bot...")
@@ -135,8 +146,8 @@ async def main():
     # Start the app only if not already connected
     if not app.is_connected:
         async with app:
+            await connect_with_retry(app)  # Attempt to connect with retry logic
             asyncio.create_task(track_current_song(app))
-            await app.start()  # Start the app
             await app.idle()   # Keep the bot running
 
 if __name__ == "__main__":
