@@ -18,7 +18,7 @@ SPOTIFY_CLIENT_ID = os.getenv('SPOTIFY_CLIENT_ID')
 SPOTIFY_CLIENT_SECRET = os.getenv('SPOTIFY_CLIENT_SECRET')
 TELEGRAM_BOT_TOKEN = os.getenv('TELEGRAM_BOT_TOKEN')
 CHANNEL_ID = os.getenv('CHANNEL_ID')
-TARGET_MESSAGE_ID = int(os.getenv('TARGET_MESSAGE_ID'))
+TARGET_MESSAGE_ID = os.getenv('TARGET_MESSAGE_ID')
 BOT_URL = os.getenv('BOT_URL')
 API_ID = os.getenv('API_ID')
 API_HASH = os.getenv('API_HASH')
@@ -35,15 +35,19 @@ sp_oauth = SpotifyOAuth(
     redirect_uri='http://localhost:8889/callback',
     scope='user-read-currently-playing user-read-playback-state'
 )
+
 spotify = Spotify(auth_manager=sp_oauth)
 
 # Function to get the currently playing track
 def get_current_playing_track():
-    current_track = spotify.current_playback()
-    if current_track is not None and current_track['is_playing']:
-        track_name = current_track['item']['name']
-        artist = current_track['item']['artists'][0]['name']
-        return track_name, artist
+    try:
+        current_track = spotify.current_playback()
+        if current_track and current_track.get('is_playing'):
+            track_name = current_track['item']['name']
+            artist = current_track['item']['artists'][0]['name']
+            return track_name, artist
+    except Exception as e:
+        logging.error("Error fetching current track: %s", e)
     return None, None
 
 # Async function to update the target message in the channel
@@ -85,7 +89,7 @@ async def download_track(client: Client, message):
         return
     
     track_name = args[0]
-    artist = args[1]
+    artist = " ".join(args[1:])  # Join the remaining args for artist name
     
     # Call the download function and send the response
     response_message = download_song(track_name, artist)
