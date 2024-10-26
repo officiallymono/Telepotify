@@ -116,16 +116,18 @@ def start_auth():
     return token_info
 
 # Setting up and running the bot
-async def main():
-    token_info = start_auth()
-    if token_info is None or 'access_token' not in token_info:
-        print("Failed to obtain access token.")
-        return
-
-    async with app:
-        await track_current_song(app)
-
-app = Client("my_bot", bot_token=TELEGRAM_BOT_TOKEN)
-
 if __name__ == "__main__":
+    app = Client("my_bot", bot_token=TELEGRAM_BOT_TOKEN)
+    
+    async def main():
+        token_info = start_auth()
+        
+        if token_info is None or 'access_token' not in token_info:
+            print("Failed to obtain access token.")
+            return
+
+        async with app:
+            asyncio.create_task(track_current_song(app))
+            await app.idle()  # This keeps the bot running until you manually stop it.
+
     asyncio.run(main())
