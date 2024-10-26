@@ -85,8 +85,7 @@ async def send_downloaded_file(client: Client, chat_id: int, track_name: str, ar
     if "با موفقیت دانلود شد." in result:
         file_path = f"{track_name} - {artist}.mp3"
         if os.path.exists(file_path):
-            async with open(file_path, 'rb') as audio_file:
-                await client.send_audio(chat_id=chat_id, audio=audio_file)
+            await client.send_audio(chat_id=chat_id, audio=file_path)
         else:
             await client.send_message(chat_id=chat_id, text="فایل دانلود شده پیدا نشد.")
     else:
