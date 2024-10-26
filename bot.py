@@ -24,7 +24,7 @@ BOT_URL = os.getenv('BOT_URL')
 sp_oauth = SpotifyOAuth(
     client_id=SPOTIFY_CLIENT_ID,
     client_secret=SPOTIFY_CLIENT_SECRET,
-    redirect_uri='http://localhost:8888/callback',
+    redirect_uri='http://localhost:8889/callback',  # تغییر پورت به 8889
     scope='user-read-currently-playing user-read-playback-state'
 )
 spotify = Spotify(auth_manager=sp_oauth)
@@ -105,7 +105,7 @@ def start_auth():
     print("Visit this URL to authorize the application:", auth_url)
 
     # Automatically get token
-    token_info = sp_oauth.get_access_token(as_dict=False)
+    token_info = sp_oauth.get_access_token(as_dict=False, redirect_port=8889)  # تغییر پورت به 8889
     if not token_info:
         print("Failed to obtain access token.")
         return None
