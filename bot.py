@@ -29,7 +29,7 @@ if not all([SPOTIFY_CLIENT_ID, SPOTIFY_CLIENT_SECRET, TELEGRAM_BOT_TOKEN, CHANNE
     logging.error("Missing one or more environment variables.")
     exit(1)
 
-# Initialize Spotify client with OAuth, using REDIRECT_URI from .env
+# Initialize Spotify client with OAuth
 sp_oauth = SpotifyOAuth(
     client_id=SPOTIFY_CLIENT_ID,
     client_secret=SPOTIFY_CLIENT_SECRET,
