@@ -6,6 +6,7 @@ from spotipy import Spotify
 from spotipy.oauth2 import SpotifyOAuth
 import asyncio
 import logging
+import requests
 
 # Load environment variables from .env file
 load_dotenv()
@@ -36,8 +37,6 @@ sp_oauth = SpotifyOAuth(
     redirect_uri=REDIRECT_URI,
     scope='user-read-currently-playing user-read-playback-state'
 )
-
-spotify = Spotify(auth_manager=sp_oauth)
 
 # Function to get the currently playing track
 def get_current_playing_track():
@@ -102,8 +101,15 @@ async def start_auth():
     print("Visit this URL to authorize the application:", auth_url)
     
     code = input("Enter the code from the URL: ")
-    token_info = sp_oauth.get_cached_token()
-
+    
+    # Exchange the authorization code for an access token
+    token_info = sp_oauth.get_access_token(code)
+    
+    if not token_info:
+        logging.error("Failed to obtain access token.")
+        print("Failed to obtain access token.")
+        return None
+    
     return token_info
 
 # Setting up and running the bot
@@ -116,6 +122,9 @@ if __name__ == "__main__":
         if token_info is None or 'access_token' not in token_info:
             print("Failed to obtain access token.")
             return
+
+        # Initialize Spotify client with the new access token
+        spotify = Spotify(auth=token_info['access_token'])
 
         async with app:
             asyncio.create_task(track_current_song(app))
