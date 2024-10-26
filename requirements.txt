@@ -1,6 +1,7 @@
 requests
-python-telegram-bot
+pyrogram
 python-dotenv
 flask
 spotdl
 ffmpeg
+tgcrypto
