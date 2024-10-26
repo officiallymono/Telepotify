@@ -131,11 +131,10 @@ async def main():
     spotify = Spotify(auth=token_info['access_token'])
 
     app = Client("my_bot", bot_token=TELEGRAM_BOT_TOKEN, api_id=API_ID, api_hash=API_HASH)
+    
     async with app:
         asyncio.create_task(track_current_song(app))
         await app.run()  # Remove asyncio.run() and just await app.run()
-    logging.info("Bot stopped.")
-
 
 if __name__ == "__main__":
     asyncio.run(main())
