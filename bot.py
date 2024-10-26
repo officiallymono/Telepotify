@@ -6,7 +6,6 @@ from spotipy import Spotify
 from spotipy.oauth2 import SpotifyOAuth
 import asyncio
 import logging
-import requests
 
 # Load environment variables from .env file
 load_dotenv()
@@ -23,7 +22,7 @@ TARGET_MESSAGE_ID = os.getenv('TARGET_MESSAGE_ID')
 BOT_URL = os.getenv('BOT_URL')
 API_ID = os.getenv('API_ID')
 API_HASH = os.getenv('API_HASH')
-REDIRECT_URI = os.getenv('REDIRECT_URI')  # Added to fetch from .env
+REDIRECT_URI = os.getenv('REDIRECT_URI')
 
 # Check for missing environment variables
 if not all([SPOTIFY_CLIENT_ID, SPOTIFY_CLIENT_SECRET, TELEGRAM_BOT_TOKEN, CHANNEL_ID, TARGET_MESSAGE_ID, BOT_URL, API_ID, API_HASH, REDIRECT_URI]):
@@ -67,7 +66,9 @@ async def track_current_song(app: Client):
         if track_name and artist:
             current_track = f"{track_name} by {artist}"
             if current_track != last_track:
-                await update_channel_message(app, f"🎶 Currently playing: {current_track}\nDownload here: {BOT_URL}/download?track={track_name}&artist={artist}")
+                # Create download link
+                download_link = f"{BOT_URL}/download?track={track_name}&artist={artist}"
+                await update_channel_message(app, f"🎶 Currently playing: {current_track}\nDownload here: {download_link}")
                 last_track = current_track
         await asyncio.sleep(10)
 
