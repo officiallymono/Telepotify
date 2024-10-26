@@ -20,8 +20,13 @@ TELEGRAM_BOT_TOKEN = os.getenv('TELEGRAM_BOT_TOKEN')
 CHANNEL_ID = os.getenv('CHANNEL_ID')
 TARGET_MESSAGE_ID = int(os.getenv('TARGET_MESSAGE_ID'))
 BOT_URL = os.getenv('BOT_URL')
-API_ID = os.getenv('API_ID')  # API ID for Pyrogram
-API_HASH = os.getenv('API_HASH')  # API Hash for Pyrogram
+API_ID = os.getenv('API_ID')
+API_HASH = os.getenv('API_HASH')
+
+# Check for missing environment variables
+if not all([SPOTIFY_CLIENT_ID, SPOTIFY_CLIENT_SECRET, TELEGRAM_BOT_TOKEN, CHANNEL_ID, TARGET_MESSAGE_ID, BOT_URL, API_ID, API_HASH]):
+    logging.error("Missing one or more environment variables.")
+    exit(1)
 
 # Initialize Spotify client with OAuth
 sp_oauth = SpotifyOAuth(
@@ -31,24 +36,6 @@ sp_oauth = SpotifyOAuth(
     scope='user-read-currently-playing user-read-playback-state'
 )
 spotify = Spotify(auth_manager=sp_oauth)
-
-# Global variable to track whether to check the current song
-check_current_song = True
-
-# Function to get currently playing track from Spotify
-def get_current_playing_track():
-    try:
-        current_song = spotify.current_user_playing_track()
-        if current_song and current_song["is_playing"]:
-            item = current_song["item"]
-            artist = item["artists"][0]["name"]
-            track_name = item["name"]
-            return track_name, artist
-        else:
-            return None, None
-    except Exception as e:
-        logging.error("Error fetching current track: %s", e)
-        return None, None
 
 # Async function to update the target message in the channel
 async def update_channel_message(app: Client, text: str):
@@ -61,9 +48,8 @@ async def update_channel_message(app: Client, text: str):
 
 # Async function to track song changes
 async def track_current_song(app: Client):
-    global check_current_song
     last_track = None
-    while check_current_song:
+    while True:
         track_name, artist = get_current_playing_track()
         if track_name and artist:
             current_track = f"{track_name} by {artist}"
@@ -81,22 +67,10 @@ def download_song(track_name: str, artist: str):
     except Exception as e:
         return f"خطا در دانلود آهنگ: {str(e)}"
 
-# Function to handle the download command
-async def send_downloaded_file(client: Client, chat_id: int, track_name: str, artist: str):
-    result = download_song(track_name, artist)
-    if "با موفقیت دانلود شد." in result:
-        file_path = f"{track_name} - {artist}.mp3"
-        if os.path.exists(file_path):
-            await client.send_audio(chat_id=chat_id, audio=file_path)
-        else:
-            await client.send_message(chat_id=chat_id, text="فایل دانلود شده پیدا نشد.")
-    else:
-        await client.send_message(chat_id=chat_id, text=result)
-
 # Function to handle the /download command
 @Client.on_message(filters.command("download"))
 async def download_track(client: Client, message):
-    args = message.command[1:]  # Get command arguments
+    args = message.command[1:]
     if len(args) < 2:
         await message.reply_text("لطفاً نام آهنگ و هنرمند را وارد کنید.")
         return
@@ -107,7 +81,7 @@ async def download_track(client: Client, message):
     await send_downloaded_file(client, message.chat.id, track_name, artist)
 
 # Function to start the OAuth process
-def start_auth():
+async def start_auth():
     auth_url = sp_oauth.get_authorize_url()
     print("Visit this URL to authorize the application:", auth_url)
     
@@ -118,10 +92,10 @@ def start_auth():
 
 # Setting up and running the bot
 if __name__ == "__main__":
-    app = Client("my_bot", bot_token=TELEGRAM_BOT_TOKEN, api_id=API_ID, api_hash=API_HASH)  # Add API ID and API Hash here
+    app = Client("my_bot", bot_token=TELEGRAM_BOT_TOKEN, api_id=API_ID, api_hash=API_HASH)
     
     async def main():
-        token_info = start_auth()
+        token_info = await start_auth()
         
         if token_info is None or 'access_token' not in token_info:
             print("Failed to obtain access token.")
@@ -129,6 +103,6 @@ if __name__ == "__main__":
 
         async with app:
             asyncio.create_task(track_current_song(app))
-            await app.idle()  # This keeps the bot running until you manually stop it.
+            await app.idle()
 
     asyncio.run(main())
