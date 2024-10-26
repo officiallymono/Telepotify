@@ -114,7 +114,7 @@ async def main():
     # Start tracking song changes in the background
     asyncio.create_task(track_current_song(application.bot))
 
-    application.run_polling()
+    await application.run_polling()  # `await` اضافه شود
 
 if __name__ == "__main__":
     asyncio.run(main())
