@@ -128,4 +128,6 @@ async def main():
     await application.run_polling()
 
 if __name__ == "__main__":
-    asyncio.run(main())
+    # Replace asyncio.run(main()) with the following:
+    loop = asyncio.get_event_loop()
+    loop.run_until_complete(main())
