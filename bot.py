@@ -103,12 +103,10 @@ def download_track(update: Update, context: CallbackContext):
 def start_auth():
     auth_url = sp_oauth.get_authorize_url()
     print("Visit this URL to authorize the application:", auth_url)
-
-    # Automatically get token without redirect_port
-    token_info = sp_oauth.get_access_token(as_dict=False)  # حذف redirect_port
-    if not token_info:
-        print("Failed to obtain access token.")
-        return None
+    
+    #  گرفتن کد دستی
+    code = input("Enter the code from the URL: ")  # اضافه کردن این خط
+    token_info = sp_oauth.get_access_token(code)  # از کد استفاده کن
 
     return token_info
 
