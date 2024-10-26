@@ -1,7 +1,7 @@
-import requests
-import base64
 import os
+import base64
 from flask import Flask, request, jsonify
+from pyrogram import Client
 
 app = Flask(__name__)
 
@@ -14,6 +14,9 @@ TARGET_MESSAGE_ID = int(os.getenv('TARGET_MESSAGE_ID'))
 
 # Global variable to track whether to check the current song
 check_current_song = True
+
+# Initialize Pyrogram Client
+client = Client("my_bot", bot_token=TELEGRAM_BOT_TOKEN)
 
 # Function to get Spotify token
 def get_spotify_token():
@@ -42,7 +45,7 @@ def get_current_playing_track(token):
         item = response.json().get("item")
         artist = item["artists"][0]["name"]
         track_name = item["name"]
-        track_url = item["external_urls"]["spotify"]  # Get the Spotify URL for the track
+        track_url = item["external_urls"]["spotify"]
         return f"{track_name} by {artist}\nListen here: {track_url}"
     elif response.status_code == 204:
         return "No song currently playing"
@@ -52,10 +55,9 @@ def get_current_playing_track(token):
 
 @app.route('/webhook', methods=['POST'])
 def webhook():
-    global check_current_song  # Use the global variable
+    global check_current_song
     data = request.json
     
-    # Ensure the event exists and is related to track change
     if 'event' in data and data['event'] == 'track_changed':
         token = get_spotify_token()
         if token:
@@ -63,20 +65,13 @@ def webhook():
             if current_track:
                 # Update the message in the channel
                 update_channel_message(current_track)
-                check_current_song = False  # Stop checking the current song
+                check_current_song = False
 
     return jsonify({"status": "success"}), 200
 
 def update_channel_message(text):
-    url = f"https://api.telegram.org/bot{TELEGRAM_BOT_TOKEN}/editMessageText"
-    payload = {
-        "chat_id": CHANNEL_ID,
-        "message_id": TARGET_MESSAGE_ID,
-        "text": text
-    }
-    response = requests.post(url, json=payload)
-    if response.status_code != 200:
-        print("Error updating message in Telegram:", response.json())
+    with client:
+        client.edit_message_text(chat_id=CHANNEL_ID, message_id=TARGET_MESSAGE_ID, text=text)
 
 if __name__ == "__main__":
     app.run(port=5000)
