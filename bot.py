@@ -24,7 +24,7 @@ BOT_URL = os.getenv('BOT_URL')
 sp_oauth = SpotifyOAuth(
     client_id=SPOTIFY_CLIENT_ID,
     client_secret=SPOTIFY_CLIENT_SECRET,
-    redirect_uri='http://localhost:8889/callback',  # تغییر پورت به 8889
+    redirect_uri='http://localhost:8889/callback',
     scope='user-read-currently-playing user-read-playback-state'
 )
 spotify = Spotify(auth_manager=sp_oauth)
@@ -40,7 +40,7 @@ def get_current_playing_track():
             item = current_song["item"]
             artist = item["artists"][0]["name"]
             track_name = item["name"]
-            return track_name, artist  # Returning both track name and artist
+            return track_name, artist
         else:
             return None, None
     except Exception as e:
@@ -81,8 +81,7 @@ def download_song(track_name: str, artist: str):
 async def send_downloaded_file(update: Update, context: CallbackContext, track_name: str, artist: str):
     result = download_song(track_name, artist)
     if "با موفقیت دانلود شد." in result:
-        # فرض کنید نام فایل دانلود شده با فرمت مشخصی ذخیره می‌شود
-        file_path = f"{track_name} - {artist}.mp3"  # نام فایل دانلود شده
+        file_path = f"{track_name} - {artist}.mp3"
         await context.bot.send_audio(chat_id=update.effective_chat.id, audio=open(file_path, 'rb'))
     else:
         await update.message.reply_text(result)
@@ -105,8 +104,8 @@ def start_auth():
     print("Visit this URL to authorize the application:", auth_url)
     
     #  گرفتن کد دستی
-    code = input("Enter the code from the URL: ")  # اضافه کردن این خط
-    token_info = sp_oauth.get_access_token(code)  # از کد استفاده کن
+    code = input("Enter the code from the URL: ")
+    token_info = sp_oauth.get_access_token(code)
 
     return token_info
 
@@ -128,6 +127,6 @@ async def main():
     await application.run_polling()
 
 if __name__ == "__main__":
-    # Replace asyncio.run(main()) with the following:
+    # Use the existing event loop instead of creating a new one
     loop = asyncio.get_event_loop()
     loop.run_until_complete(main())
