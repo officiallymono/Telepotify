@@ -22,17 +22,18 @@ TARGET_MESSAGE_ID = os.getenv('TARGET_MESSAGE_ID')
 BOT_URL = os.getenv('BOT_URL')
 API_ID = os.getenv('API_ID')
 API_HASH = os.getenv('API_HASH')
+REDIRECT_URI = os.getenv('REDIRECT_URI')  # Added to fetch from .env
 
 # Check for missing environment variables
-if not all([SPOTIFY_CLIENT_ID, SPOTIFY_CLIENT_SECRET, TELEGRAM_BOT_TOKEN, CHANNEL_ID, TARGET_MESSAGE_ID, BOT_URL, API_ID, API_HASH]):
+if not all([SPOTIFY_CLIENT_ID, SPOTIFY_CLIENT_SECRET, TELEGRAM_BOT_TOKEN, CHANNEL_ID, TARGET_MESSAGE_ID, BOT_URL, API_ID, API_HASH, REDIRECT_URI]):
     logging.error("Missing one or more environment variables.")
     exit(1)
 
-# Initialize Spotify client with OAuth
+# Initialize Spotify client with OAuth, using REDIRECT_URI from .env
 sp_oauth = SpotifyOAuth(
     client_id=SPOTIFY_CLIENT_ID,
     client_secret=SPOTIFY_CLIENT_SECRET,
-    redirect_uri='http://localhost:8889/callback',
+    redirect_uri=REDIRECT_URI,
     scope='user-read-currently-playing user-read-playback-state'
 )
 
@@ -53,11 +54,11 @@ def get_current_playing_track():
 # Async function to update the target message in the channel
 async def update_channel_message(app: Client, text: str):
     try:
-        await app.edit_message_text(chat_id=int(CHANNEL_ID), message_id=int(TARGET_MESSAGE_ID), text=text)
+        await app.edit_message_text(chat_id=CHANNEL_ID, message_id=TARGET_MESSAGE_ID, text=text)
         logging.info("Channel message updated.")
     except Exception as e:
         logging.error("Error updating message: %s", e)
-        await app.send_message(chat_id=int(CHANNEL_ID), text=f"خطا در به‌روزرسانی پیام: {str(e)}")
+        await app.send_message(chat_id=CHANNEL_ID, text=f"خطا در به‌روزرسانی پیام: {str(e)}")
 
 # Async function to track song changes
 async def track_current_song(app: Client):
@@ -107,7 +108,7 @@ async def start_auth():
 
 # Setting up and running the bot
 if __name__ == "__main__":
-    app = Client("my_bot", api_id=int(API_ID), api_hash=API_HASH, bot_token=TELEGRAM_BOT_TOKEN)
+    app = Client("my_bot", bot_token=TELEGRAM_BOT_TOKEN, api_id=API_ID, api_hash=API_HASH)
     
     async def main():
         token_info = await start_auth()
