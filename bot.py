@@ -127,6 +127,5 @@ async def main():
     await application.run_polling()
 
 if __name__ == "__main__":
-    # Use the existing event loop instead of creating a new one
-    loop = asyncio.get_event_loop()
-    loop.run_until_complete(main())
+    # Use asyncio.run to run the main function
+    asyncio.run(main())
